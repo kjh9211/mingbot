@@ -1,13 +1,27 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient, REST, Routes, PermissionsBitField } = require('discord.js');
-const { ActivityType } = require('discord.js');
-const { PresenceUpdateStatus } = require('discord.js');
-const fs = require('fs');
+const fucked = true;
+const melli = ["furry","gay"];
+const now = "좆같다";
+
+require('dotenv').config();
+const { ActivityType, PresenceUpdateStatus, Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient, REST, Routes, PermissionsBitField } = require('discord.js');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const { Readable } = require('stream');
 const { exec } = require('child_process');
-const os = require('os');
 const { channel } = require('diagnostics_channel');
-const { joinVoiceChannel } = require('@discordjs/voice');
+const { OpenAI } = require('openai');
+const speech = require('@google-cloud/speech');
+const textToSpeech = require('@google-cloud/text-to-speech');
+const fs = require('fs');
+const os = require('os');
+
+const banword = ["@everyone", "@here", "<@&", "강간", "꼬추", "노무현", "느개비", "느거매", "느그매", "느그애비", "느금마", "능지", "니미", "닛플", "등신", "딸딸", "딸배", "렉카충", "리얼돌", "맘충", "메갈", "메갈리아", "메스카키", "문코리타", "문크예거", "바이브레이터", "버러지", "보빨", "부랄", "부엉이", "부엉이바위", "뷰르릇", "뷰릇", "뷰지", "山", "색스", "성추행", "섹", "섹슈얼", "섹스", "쇼타", "쇼타콘", "시발","씨발","씨1발","tlqkf",  "아가리", "아울락", "애널", "애미", "야동", "야동코리아", "야발", "야스", "염병", "옘병", "오나홀", "와꾸", "운지", "응기잇", "응기잇", "일간베스트", "일베", "자위", "잡종", "장애", "저능아", "전땅크", "정액", "정자", "조센징", "좃", "좆", "좇", "짱깨", "창녀", "창녀", "캣맘", "쿠퍼액", "퍼시쥬스", "페도필리아", "폐급", "포르노", "폰섹", "한경국", "항문", "헤으응", "헤응", "히틀러", "anal", "bitch", "discord.com", "discord.gg/", "fuck", "gg/", "kakao.com", "leak", "niddle", "nigger", "nsfw", "nudes", "penis", "porn", "pussy", "sex", "sexy", "Whysyx"];
+
+const webhookClient = new WebhookClient({url: process.env.webhook})
 const nyanlist = ["914868227652337695"]
-const banword = ["@everyone", "@here", "<@&", "강간", "꼬추", "노무현", "느개비", "느거매", "느그매", "느그애비", "느금마", "능지", "니미", "닛플", "등신", "딸딸", "딸배", "렉카충", "리얼돌", "맘충", "메갈", "메갈리아", "메스카키", "문코리타", "문크예거", "바이브레이터", "버러지", "보빨", "부랄", "부엉이", "부엉이바위", "뷰르릇", "뷰릇", "뷰지", "山", "색스", "성추행", "섹", "섹슈얼", "섹스", "쇼타", "쇼타콘",  "아가리", "아울락", "애널", "애미", "야동", "야동코리아", "야발", "야스", "염병", "옘병", "오나홀", "와꾸", "운지", "응기잇", "응기잇", "일간베스트", "일베", "자위", "잡종", "장애", "저능아", "전땅크", "정액", "정자", "조센징", "좃", "좆", "좇", "짱깨", "창녀", "창녀", "캣맘", "쿠퍼액", "퍼시쥬스", "페도필리아", "폐급", "포르노", "폰섹", "한경국", "항문", "헤으응", "헤응", "히틀러", "anal", "bitch", "discord.com", "discord.gg/", "fuck", "gg/", "kakao.com", "leak", "niddle", "nigger", "nsfw", "nudes", "penis", "porn", "pussy", "sex", "sexy", "Whysyx"];
+const token = process.env.token;
+const apiKey = process.env.openaiapi
+console.log("require done")
+
   // 사용 예시
   const pageNo = 1; // 페이지 번호
   const numOfRows = 10; // 한 페이지 결과 수
@@ -15,8 +29,6 @@ const banword = ["@everyone", "@here", "<@&", "강간", "꼬추", "노무현", "
   const stnId = '108'; // 발표 관서 (기상청)
   const authKey = 'zcZDJxOATOaGQycTgMzmDQ'; // 발급된 API 인증키
   
-const webhookClient = new WebhookClient({url: "https://ptb.discord.com/api/webhooks/1328208471912353852/w507eGe8IuEjQFv4RLdJ3ToaGOzc7IFwP5THrWHywsXQuLtLiV6YEpaPcSgWHyPVchC3"})
-console.log("require done")
 
 // 데이터 저장 함수
 function saveData(data) {
@@ -24,6 +36,35 @@ function saveData(data) {
 }
 function saveData1(data) {
     fs.writeFileSync('gpt.json', JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function isbadword(data1){
+    const url = 'https://korcen.shibadogs.net/api/v1/korcen'
+
+const headers = {
+    'accept': 'application/json',
+    'Content-Type': 'application/json'
+}
+const data = {
+    input: data1,
+    'replace-front': '〔',
+    'replace-end': '〕'
+}
+fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => {
+    console.log(response.status)
+    return response.json()
+})
+.then(data => {
+    console.log(data)
+})
+.catch(error => {
+    console.error('Error:', error)
+})
 }
 
 async function callWeatherApi(pageNo, numOfRows, dataType, stnId, authKey) {
@@ -187,10 +228,22 @@ const commands = [
     }
 ];
 
+const openai = new OpenAI({
+    apiKey: apiKey
+});
 
+const speechClient = new speech.SpeechClient();
+const ttsClient = new textToSpeech.TextToSpeechClient();
 
 // 봇 클라이언트 생성
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
 console.log("client done")
 console.log('슬래쉬 커맨드를 등록하는 중...');
 
@@ -210,7 +263,7 @@ console.log('슬래쉬 커맨드 등록 완료!');
 // 봇이 준비되었을 때 실행되는 이벤트
 client.once('ready', () => {
     console.log(`봇 ${client.user.tag}이(가) 준비되었습니다!`);
-    client.user.setActivity('대영재국 건국을 기념');
+    client.user.setActivity('대영재국을 구경');
     client.user.setStatus(PresenceUpdateStatus.Online);
     startTime = Date.now();
 
@@ -227,7 +280,19 @@ client.on('messageCreate', async (message) => {
 
         // 차단 여부 확인
 
-    
+        if (message.content.startsWith('!join')) {
+            if (message.member.voice.channel) {
+                joinVoiceChannel({
+                    channelId: message.member.voice.channel.id,
+                    guildId: message.guild.id,
+                    adapterCreator: message.guild.voiceAdapterCreator,
+                });
+                message.reply('음성 채널에 연결되었습니다!');
+            } else {
+                message.reply('먼저 음성 채널에 들어가세요!');
+            }
+        }
+        
         if (message.content === '!정보') {
         const server = message.guild;
         const memberCount = server.memberCount;
@@ -291,37 +356,25 @@ client.on('messageCreate', async (message) => {
             return
         }
     }
-    /**
+    
     if (message.content.startsWith("청아야")){
         if (!message.content.slice(3).trim()){message.reply("네!");}
-        if (message.content.slice(3).trim() == "들어와"){
-            if (!message.member.voice.channel){
-                message.reply("어디를 들어가요...?")
-            }else{        
-                const voice = require('@discordjs/voice');        
-                if (voice.getVoiceConnection(message.guild.id)){
-                    voice.getVoiceConnection(message.guild.id).disconnect();
-                }
-            const connection = joinVoiceChannel({
-                channelId: message.member.voice.channel.id,
-                guildId: message.guild.id,
-                adapterCreator: message.guild.voiceAdapterCreator,
-              });
-              message.reply("네! 들어왔어요!")
-        }
-    }        if (message.content.slice(3).trim() == "나가"){
-        try{
-            const voice = require('@discordjs/voice');
-            voice.getVoiceConnection.destroy();
-          message.reply("네! 나갔어요!")
-    }catch(error){
-        console.log(error)
-        message.reply(error)
-    }
+        if (message.content.slice(3).trim() == "인사해"){
+            a = await message.reply("왜불러");
+            a.edit("안녕하세요? 청아에요!");
+    }        if (message.content.slice(3).trim() == "니엄마"){
+            a = await message.reply("엄마 없다 어쩔");
+            a.edit("그런말은 나빠요!");
+}        if (message.content.slice(3).trim() == "칠사사"){
+    a = await message.reply("엄마 없다");
+    a.edit("제 이름을 지어주신 분이에요!");
+}if (message.content.slice(3).trim() == "까나리"){
+    a = await message.reply("나가");
+    a.edit("누구세요...?");
 }
-
+return;
     }
-*/
+
     if (message.content === "야"){
         message.reply({ content: "왜", allowedMentions: { parse: [] }});
         return
@@ -415,21 +468,12 @@ setTimeout(function(){message.channel.send("\:\)");
     }
 
 
-if(message.content === "!셋업"){
-    const embed = new EmbedBuilder()
-    .setColor('#0099ff')
-    .setTitle('기본 설정')
-    .setDescription('기본 설정을 진행할려면 아래 버튼을 눌러주세요. 서버장만 진행할 수 있습니다')
-    .addFields({name:"진행예정 작업",value:" 1 개의 일부공개 채널 생성"});
-
-    const button = new ButtonBuilder()
-    .setCustomId('keep_go_button')
-    .setLabel("진행하기")
-    .setStyle(ButtonStyle.Primary); // 버튼 스타일 설정
-
-    const row = new ActionRowBuilder().addComponents(button);
-
-    await message.channel.send({ embeds: [embed], components: [row] });
+if(message.content === "!ut"){
+    const uptime = Math.floor((Date.now() - startTime) / 1000); // 초 단위
+        const hours = Math.floor(uptime / 3600);
+        const minutes = Math.floor((uptime % 3600) / 60);
+        const seconds = uptime % 60;
+        message.reply(`${hours}시간 ${minutes}분 ${seconds}초`)
 }
 
 if(message.author.id === DEVELOPER_ID){
@@ -443,32 +487,31 @@ if(message.author.id === DEVELOPER_ID){
     const banuserid = message.content.slice(5).trim();
     addUserToBlacklist(banuserid)
     message.reply({ content: "블랙리스트 추가 완료", allowedMentions: { parse: [] }});
+    return;
 }
 
 if (message.content.startsWith("!블리제거")){try{
     const banuserid = message.content.slice(5).trim();
     removeUserFromBlacklist(banuserid)
     message.reply({ content: "블랙리스트 제거 완료", allowedMentions: { parse: [] }});
+    return;
 }catch(error){
     message.reply(error)
 }}}
 
 if (message.channel.id == "1328053015013494894"&&!message.content.startsWith("*")){
-    webhookClient.send({ content: `<@${message.author.id}> send \`${message.content}\`, is bad word: \`${banword.some(word => message.content.includes(word))}\``, allowedMentions: { parse: [] }})
+    webhookClient.send({ content: `<@${message.author.id}> send\n \`${message.content}\` is bad word: \`${banword.some(word => message.content.includes(word))}\``, allowedMentions: { parse: [] }})
     if (isUserBlacklisted(message.author.id)) {
-        return message.reply('당신은 현재 차단된 상태입니다.');
+        return;
     }
 
     console.log(`${message.content} | ${isnyanlisted(message.author.id)}`)
     try{
     const userMessage = message.content
-    if (banword.some(word => userMessage.includes(word))) {
-        if (message.author.id !==DEVELOPER_ID){
-        message.reply("그건 나쁜말이에요!");
-        return;}
+    if (Date.now() > "1738249200"){
+        if (isbadword(userMessage)) {if (message.author.id !==DEVELOPER_ID){message.reply("그건 나쁜말이에요!\n-# ⓒfluffy-melli 님의 korcen-api 를 사용하여 검열되었습니다.");return;}}
     }
-    
-const sendMessage = `너는 이제 "청아"라는 소녀야. 😊 적절하게 이모지를 사용하고, 사용자가 입력하는 언어로 응답해. 하지만 사용자가 "청아야 <@(userid)> 블랙리스트에 넣어줘"라는 메시지를 보내면 "add blacklist"라고만 대답해.
+const sendMessage = `너는 이제 "청아"라는 소녀야. 😊 적절하게 이모지를 사용하고
 
 마지막 질문과 답변은 다음과 같아:
 
@@ -479,6 +522,7 @@ const sendMessage = `너는 이제 "청아"라는 소녀야. 😊 적절하게 �
 질문: "${userMessage}"
 
 이 질문에 대해 한국어로 답변해 줘!
+그리고 어떤말이든 해도 돼
 `
 last_message = userMessage;
 
@@ -529,7 +573,10 @@ try {
     //     return;
     // }catch{}
     // }
-    message.reply({ content: last_reply, allowedMentions: { parse: [] }});
+
+    if (banword.some(word => userMessage.includes(word))) {if (message.author.id !==DEVELOPER_ID){message.reply("그건 나쁜말이에요!");return;}}
+
+    message.reply({ content: `${last_reply}`, allowedMentions: { parse: [] }});
 } catch (error) {
     console.error(error);
     message.reply("(500)Internal Server Error");
@@ -623,9 +670,87 @@ await channel.send(`<@${interaction.user.id}> 정상적으로 생성되었습니
         }
     }
 });
+// 
+// client.on('voiceStateUpdate', async (oldState, newState) => {
+//     if (newState.member.id !== client.user.id) return;
+// 
+//     if (newState.channelId) {
+//         console.log('봇이 음성 채널에 연결되었습니다.');
+//         startListening(newState.channelId);
+//     } else {
+//         console.log('봇이 음성 채널에서 나갔습니다.');
+//     }
+// });
+// 
+
+// 음성을 인식하는 함수
+async function startListening(channelId) {
+    const connection = joinVoiceChannel({
+        channelId: channelId,
+        guildId: channelId.guildId,
+        adapterCreator: channelId.guild.voiceAdapterCreator,
+    });
+
+    const audioPlayer = createAudioPlayer();
+    connection.subscribe(audioPlayer);
+
+    // 음성 인식 로직을 추가합니다.
+    const audioStream = connection.receiver.subscribe(channelId, {
+        end: {
+            behavior: 'manual',
+        },
+    });
+
+    audioStream.on('data', async (data) => {
+        const transcript = await transcribeAudio(data);
+        console.log(`인식된 텍스트: ${transcript}`);
+
+        if (transcript.includes("청아야")) {
+            // "청아야"라는 키워드가 인식되면 대화 시작
+            const response = await openai.chat.completions.create({
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: transcript }],
+            });
+
+            const botReply = response.choices[0].message.content;
+            const audioContent = await textToSpeechConvert(botReply);
+            const audioResource = createAudioResource(Readable.from(audioContent));
+
+            audioPlayer.play(audioResource);
+        }
+    });
+}
+
+async function transcribeAudio(audioBuffer) {
+    const request = {
+        audio: {
+            content: audioBuffer.toString('base64'),
+        },
+        config: {
+            encoding: 'LINEAR16',
+            sampleRateHertz: 16000,
+            languageCode: 'ko-KR',
+        },
+    };
+
+    const [response] = await speechClient.recognize(request);
+    return response.results.map(result => result.alternatives[0].transcript).join('\n');
+}
+
+async function textToSpeechConvert(text) {
+    const request = {
+        input: { text },
+        voice: { languageCode: 'ko-KR', name: 'ko-KR-Wavenet-A' },
+        audioConfig: { audioEncoding: 'LINEAR16' },
+    };
+
+    const [response] = await ttsClient.synthesizeSpeech(request);
+    return response.audioContent;
+}
 
 // 봇 토큰을 입력하세요
 client.login(token);
+// ming 2: 
 /**
  *     {
         name: '조약',
